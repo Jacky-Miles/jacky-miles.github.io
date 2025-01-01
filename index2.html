@@ -31,6 +31,13 @@
         <label for="doublePlaybackRate">Double Playback Rate:</label>
         <input type="checkbox" id="doublePlaybackRate">
         <br>
+        <label for="numberType">Number Type:</label>
+        <select id="numberType">
+            <option value="all">All Numbers</option>
+            <option value="odd">Odd Numbers</option>
+            <option value="even">Even Numbers</option>
+        </select>
+        <br>
         <button id="startButton">Start</button>
         <button id="stopButton">Stop</button>
     </div>
@@ -47,23 +54,32 @@
         let millisecondsRadio = document.getElementById('millisecondsRadio');
         let bpmRadio = document.getElementById('bpmRadio');
         let doublePlaybackRateCheckbox = document.getElementById('doublePlaybackRate');
+        let numberTypeSelect = document.getElementById('numberType');
         let metronomeAudio = document.getElementById('metronomeAudio');
 
         let intervalId;
         let audioIntervalId;
 
-        function getRandomNumber(max) {
-            return Math.floor(Math.random() * max) + 1;
+        function getRandomNumber(max, numberType) {
+            let num;
+            do {
+                num = Math.floor(Math.random() * max) + 1;
+            } while (
+                (numberType === 'odd' && num % 2 === 0) ||
+                (numberType === 'even' && num % 2 !== 0)
+            );
+            return num;
         }
 
         function startCounter() {
             let speed = parseInt(speedInput.value);
+            let numberType = numberTypeSelect.value;
             clearInterval(intervalId); // Clear any existing interval
             clearInterval(audioIntervalId); // Clear any existing audio interval
 
             intervalId = setInterval(() => {
                 let maxNumber = parseInt(maxNumberInput.value);
-                counterElement.textContent = getRandomNumber(maxNumber);
+                counterElement.textContent = getRandomNumber(maxNumber, numberType);
                 if (!doublePlaybackRateCheckbox.checked) {
                     metronomeAudio.currentTime = 0; // Rewind to the start
                     metronomeAudio.play(); // Play the audio
