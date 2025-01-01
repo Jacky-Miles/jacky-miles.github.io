@@ -32,6 +32,8 @@
         <button id="stopButton">Stop</button>
     </div>
 
+    <audio id="metronomeAudio" src="https://jacky-miles.github.io/metronome-85688.mp3"></audio>
+
     <script>
         let counterElement = document.getElementById('counter');
         let speedInput = document.getElementById('speed');
@@ -41,8 +43,10 @@
         let stopButton = document.getElementById('stopButton');
         let millisecondsRadio = document.getElementById('millisecondsRadio');
         let bpmRadio = document.getElementById('bpmRadio');
+        let metronomeAudio = document.getElementById('metronomeAudio');
 
         let intervalId;
+
         function getRandomNumber(max) {
             return Math.floor(Math.random() * max) + 1;
         }
@@ -53,6 +57,8 @@
             intervalId = setInterval(() => {
                 let maxNumber = parseInt(maxNumberInput.value);
                 counterElement.textContent = getRandomNumber(maxNumber);
+                metronomeAudio.currentTime = 0; // Rewind to the start
+                metronomeAudio.play(); // Play the audio
             }, speed);
         }
 
