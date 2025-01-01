@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Contatore Casuale con Metronomo</title>
+<style>
+  #contatore {
+    font-size: 48px;
+    text-align: center;
+    margin-top: 20px;
+  }
+  #controlli {
+    text-align: center;
+    margin-top: 20px;
+  }
+  #controlli input[disabled] {
+    background-color: #eee;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<div id="contatore">0</div>
+
+<div id="controlli">
+  Modalità:
+  <select id="modalita">
+    <option value="ms">Millisecondi</option>
+    <option value="bpm">BPM</option>
+  </select><br><br>
+  <label for="velocita">Velocità (ms):</label>
+  <input type="number" id="velocita" value="1000" min="100"><br><br>
+  <label for="bpm">BPM:</label>
+  <input type="number" id="bpm" value="60" min="1"><br><br>
+  <label for="max">Numero Massimo:</label>
+  <input type="number" id="max" value="8" min="1"><br><br>
+    <button id="startStop">Avvia</button>
+</div>
+
+<audio id="metronomo-sound" preload="auto">
+  <source src="metronomo.mp3" type="audio/mpeg">
+  Il tuo browser non supporta l'elemento audio.
+</audio>
+
+<script>
+let intervalloId;
+let isRunning = false; // Variabile per tracciare lo stato del contatore
+const metronomoSound = document.getElementById("metronomo-sound");
+const startStopButton = document.getElementById("startStop");
+
+function aggiornaContatore() {
+    let max = document.getElementById("max").value;
+    if (isNaN(max) || max < 1) {
+        max = 8;
+        document.getElementById("max").value = max;
+        alert("Inserisci un numero massimo valido maggiore o uguale a 1.");
+    }
+
+  const numeroCasuale = Math.floor(Math.random() * max) + 1;
+  document.getElementById("contatore").textContent = numeroCasuale;
+
+  metronomoSound.currentTime = 0;
+  metronomoSound.play();
+}
+
+function impostaIntervallo() {
+    if (isRunning) { // Imposta l'intervallo solo se il contatore è in esecuzione
+        clearInterval(intervalloId);
+
+        const modalita = document.getElementById("modalita").value;
+        let velocita;
+
+        if (modalita === "ms") {
+            velocita = document.getElementById("velocita").value;
+            if (isNaN(velocita) || velocita < 100) {
+                velocita = 100;
+                document.getElementById("velocita").value = velocita;
+                alert("Inserisci un numero valido maggiore o uguale a 100 per i Millisecondi.");
+            }
+        } else {
+            let bpm = document.getElementById("bpm").value;
+            if (isNaN(bpm) || bpm < 1) {
+                bpm = 60;
+                document.getElementById("bpm").value = bpm;
+                alert("Inserisci un numero valido maggiore o uguale a 1 per i BPM.");
+            }
+            velocita = 60000 / bpm;
+        }
+
+        intervalloId = setInterval(aggiornaContatore, velocita);
+    }
+}
+
+const modalitaSelect = document.getElementById("modalita");
+const velocitaInput = document.getElementById("velocita");
+const bpmInput = document.getElementById("bpm");
+const maxInput = document.getElementById("max");
+
+modalitaSelect.addEventListener("change", function() {
+  if (this.value === "ms") {
+    velocitaInput.disabled = false;
+    bpmInput.disabled = true;
+  } else {
+    velocitaInput.disabled = true;
+    bpmInput.disabled = false;
+  }
+    impostaIntervallo();
+});
+
+// Gestione del pulsante Avvia/Pausa
+startStopButton.addEventListener("click", function() {
+  isRunning = !isRunning; // Inverte lo stato (true/false)
+
+  if (isRunning) {
+    startStopButton.textContent = "Pausa";
+    impostaIntervallo(); // Avvia il contatore
+  } else {
+    startStopButton.textContent = "Avvia";
+    clearInterval(intervalloId); // Ferma il contatore
+  }
+});
+
+impostaIntervallo();
+velocitaInput.disabled = false;
+bpmInput.disabled = true;
+
+document.getElementById("velocita").addEventListener("input", impostaIntervallo);
+document.getElementById("bpm").addEventListener("input", impostaIntervallo);
+maxInput.addEventListener("input", aggiornaContatore);
+</script>
+
+</body>
+</html>
