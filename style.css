@@ -3,6 +3,7 @@ body{
 }
 label{
         color:#ffffff;
+        line-height: 2em;
 }
 #counter {
         font-size: 40vh;
