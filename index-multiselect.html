@@ -17,13 +17,10 @@
         <input type="radio" id="bpmRadio" name="speedType">
         <input type="number" id="bpm" value="60" disabled>
         <br>
-        <label for="maxNumber">Numero massimo:</label>
-        <input type="number" id="maxNumber" value="8">
-        <br>
         <label for="doublePlaybackRate">Suono a doppia velocità:</label>
         <input type="checkbox" id="doublePlaybackRate">
         <br>
-        <label for="numberType">Numberi mostrati:</label>
+        <label for="numberType">Numeri mostrati:</label>
         <select id="numberType">
             <option value="all">Tutti</option>
             <option value="odd">Solo Dispari</option>
@@ -43,6 +40,7 @@
         <script>
             const checkboxContainer = document.getElementById('checkboxes');
             const counterElement = document.getElementById('counter');
+            const activeNumbers = new Set();
 
             for (let i = 1; i <= 11; i++) {
                 const label = document.createElement('label');
@@ -51,10 +49,13 @@
                 checkbox.type = 'checkbox';
                 checkbox.value = i;
                 checkbox.checked = true;
+                activeNumbers.add(i);
 
                 checkbox.addEventListener('change', () => {
                     if (checkbox.checked) {
-                        counterElement.textContent = checkbox.value;
+                        activeNumbers.add(parseInt(checkbox.value));
+                    } else {
+                        activeNumbers.delete(parseInt(checkbox.value));
                     }
                 });
 
@@ -62,97 +63,32 @@
                 checkboxContainer.appendChild(label);
                 checkboxContainer.appendChild(document.createElement('br'));
             }
+
+            function getRandomActiveNumber() {
+                const numbersArray = Array.from(activeNumbers);
+                if (numbersArray.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * numbersArray.length);
+                    return numbersArray[randomIndex];
+                }
+                return 0; // Default if no checkboxes are selected
+            }
+
+            function startCounter() {
+                let speed = parseInt(document.getElementById('speed').value);
+                clearInterval(window.intervalId);
+
+                window.intervalId = setInterval(() => {
+                    counterElement.textContent = getRandomActiveNumber();
+                }, speed);
+            }
+
+            function stopCounter() {
+                clearInterval(window.intervalId);
+            }
+
+            document.getElementById('startButton').addEventListener('click', startCounter);
+            document.getElementById('stopButton').addEventListener('click', stopCounter);
         </script>
     </div>
-
-    <script>
-        let speedInput = document.getElementById('speed');
-        let bpmInput = document.getElementById('bpm');
-        let maxNumberInput = document.getElementById('maxNumber');
-        let startButton = document.getElementById('startButton');
-        let stopButton = document.getElementById('stopButton');
-        let millisecondsRadio = document.getElementById('millisecondsRadio');
-        let bpmRadio = document.getElementById('bpmRadio');
-        let doublePlaybackRateCheckbox = document.getElementById('doublePlaybackRate');
-        let numberTypeSelect = document.getElementById('numberType');
-        let metronomeAudio = document.getElementById('metronomeAudio');
-
-        let intervalId;
-        let audioIntervalId;
-
-        function getRandomNumber(max, numberType) {
-            let num;
-            do {
-                num = Math.floor(Math.random() * max) + 1;
-            } while (
-                (numberType === 'odd' && num % 2 === 0) ||
-                (numberType === 'even' && num % 2 !== 0)
-            );
-            return num;
-        }
-
-        function startCounter() {
-            let speed = parseInt(speedInput.value);
-            let numberType = numberTypeSelect.value;
-            clearInterval(intervalId); // Clear any existing interval
-            clearInterval(audioIntervalId); // Clear any existing audio interval
-
-            intervalId = setInterval(() => {
-                let maxNumber = parseInt(maxNumberInput.value);
-                counterElement.textContent = getRandomNumber(maxNumber, numberType);
-                if (!doublePlaybackRateCheckbox.checked) {
-                    metronomeAudio.currentTime = 0; // Rewind to the start
-                    metronomeAudio.play(); // Play the audio
-                }
-            }, speed);
-
-            if (doublePlaybackRateCheckbox.checked) {
-                audioIntervalId = setInterval(() => {
-                    metronomeAudio.currentTime = 0; // Rewind to the start
-                    metronomeAudio.play(); // Play the audio
-                }, speed / 2);
-            }
-        }
-
-        function stopCounter() {
-            clearInterval(intervalId);
-            clearInterval(audioIntervalId);
-        }
-
-        function convertBPMToMilliseconds(bpm) {
-            return (60 / bpm) * 1000;
-        }
-
-        bpmInput.addEventListener('input', () => {
-            let bpm = parseInt(bpmInput.value);
-            if (bpmRadio.checked) {
-                speedInput.value = convertBPMToMilliseconds(bpm);
-            }
-        });
-
-        speedInput.addEventListener('input', () => {
-            let speed = parseInt(speedInput.value);
-            if (millisecondsRadio.checked) {
-                bpmInput.value = (60 / (speed / 1000)).toFixed(2);
-            }
-        });
-
-        millisecondsRadio.addEventListener('change', () => {
-            if (millisecondsRadio.checked) {
-                speedInput.disabled = false;
-                bpmInput.disabled = true;
-            }
-        });
-
-        bpmRadio.addEventListener('change', () => {
-            if (bpmRadio.checked) {
-                speedInput.disabled = true;
-                bpmInput.disabled = false;
-            }
-        });
-
-        startButton.addEventListener('click', startCounter);
-        stopButton.addEventListener('click', stopCounter);
-    </script>
 </body>
 </html>
