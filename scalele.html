@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Musical Scale Practice</title>
+    <title>Daily Musical Scale</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -48,6 +48,19 @@
             font-size: 1rem;
             color: #a0aec0;
             margin-bottom: 2rem;
+        }
+        
+        .date-picker-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        #date-input {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #4a5568;
+            cursor: pointer;
         }
 
         .scale-card {
@@ -97,18 +110,23 @@
 <body>
 
 <div class="container">
-    <h1 class="title">Musical Scale Practice of the Day</h1>
+    <h1 class="title">Musical Scale of the Day</h1>
     <p class="subtitle">A new scale every day, for every user.</p>
+    
+    <div class="date-picker-container">
+        <label for="date-input" class="text-gray-300 font-medium">Select a Date:</label>
+        <input type="date" id="date-input" class="mt-2">
+    </div>
 
     <!-- Today's Scale -->
     <div id="today-container" class="scale-card">
-        <p class="text-lg text-white font-semibold mb-2">Today's Scale:</p>
+        <p class="text-lg text-white font-semibold mb-2" id="today-label">Today's Scale:</p>
         <div id="today-scale" class="scale-name">Loading...</div>
     </div>
 
     <!-- Past Scales Section -->
     <div id="past-scales-section">
-        <div class="section-heading">Scales practiced in the Past 3 Days</div>
+        <div class="section-heading">Past 7 Days</div>
         <div id="past-scales-container">
             <!-- Past scales will be dynamically added here -->
         </div>
@@ -141,16 +159,27 @@
         return array;
     }
 
-    // Function to get the current day's number (day since epoch)
-    function getDayNumber() {
-        const today = new Date();
+    // Function to get the day number (day since epoch) for a given date
+    function getDayNumber(date) {
         const start = new Date(0); // Unix epoch
-        const diff = today.getTime() - start.getTime();
+        const diff = date.getTime() - start.getTime();
         return Math.floor(diff / (1000 * 60 * 60 * 24));
     }
 
-    // Main function to get the scales for the day and the past 7 days
+    // Main function to get the scales for the selected date and the past 7 days
     function getDailyScales() {
+        // Get the selected date from the input, or use the current date if none is selected
+        const dateInput = document.getElementById('date-input').value;
+        const selectedDate = dateInput ? new Date(dateInput) : new Date();
+
+        // Update the "Today's Scale" label
+        const todayLabel = document.getElementById('today-label');
+        if (dateInput) {
+            todayLabel.textContent = `Scales for ${selectedDate.toLocaleDateString()}:`;
+        } else {
+            todayLabel.textContent = "Today's Scale:";
+        }
+
         // Create the full list of all possible scales (15 roots * 3 types = 45 scales)
         const allScales = [];
         roots.forEach(root => {
@@ -159,31 +188,39 @@
             });
         });
 
-        const dayNumber = getDayNumber();
-        const scalesSequence = seededShuffle(allScales.slice(), dayNumber);
-        
-        // Display today's scale
-        const todayIndex = dayNumber % allScales.length;
-        const todayScale = scalesSequence[todayIndex];
+        // Calculate today's scale by generating a new sequence for the selected date's day number
+        const dayNumber = getDayNumber(selectedDate);
+        const todaySequence = seededShuffle(allScales.slice(), dayNumber);
+        const todayScale = todaySequence[dayNumber % allScales.length];
         document.getElementById('today-scale').textContent = todayScale;
         
-        // Display past 3 days' scales
+        // Display past 7 days' scales
         const pastScalesContainer = document.getElementById('past-scales-container');
-        for (let i = 1; i <= 3; i++) {
-            const pastDayNumber = dayNumber - i;
+        pastScalesContainer.innerHTML = ''; // Clear previous scales
+        for (let i = 1; i <= 7; i++) {
+            const pastDate = new Date(selectedDate);
+            pastDate.setDate(selectedDate.getDate() - i);
+            
+            const pastDayNumber = getDayNumber(pastDate);
             if (pastDayNumber >= 0) {
-                const pastScaleIndex = pastDayNumber % allScales.length;
-                const pastScale = scalesSequence[pastScaleIndex];
+                // Generate a new, unique sequence for this specific historical day
+                const pastSequence = seededShuffle(allScales.slice(), pastDayNumber);
+                const pastScale = pastSequence[pastDayNumber % allScales.length];
                 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'scale-card scale-card-prev';
-                dayDiv.innerHTML = `<p class="text-gray-400 font-medium">${i} days ago:</p><div class="scale-name-prev">${pastScale}</div>`;
+                dayDiv.innerHTML = `<p class="text-gray-400 font-medium">${pastDate.toLocaleDateString()}:</p><div class="scale-name-prev">${pastScale}</div>`;
                 pastScalesContainer.appendChild(dayDiv);
             }
         }
     }
 
-    // Run the function to display the scales when the page loads
+    // Add event listener to the date input
+    document.getElementById('date-input').addEventListener('change', getDailyScales);
+
+    // Set the initial date to today and run the function
+    const dateInput = document.getElementById('date-input');
+    dateInput.valueAsDate = new Date();
     window.onload = getDailyScales;
 </script>
 
