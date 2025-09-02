@@ -1,172 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Today's Musical Scale</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: sans-serif; background: #f7f7fa; margin: 0; padding: 2em;}
-    h1 { text-align: center; }
-    .scale-box { margin: 2em auto; max-width: 400px; background: #fff; border-radius: 1em; box-shadow: 0 2px 8px #aaa3; padding: 2em; text-align: center; }
-    .scale-today { font-size: 2em; color: #336; margin: 1em 0; }
-    .scale-yesterday { font-size: 1.2em; color: #666; margin: 0.5em 0 1em; }
-    .label { font-weight: bold; color: #555; }
-    .notes-list { margin: 0.5em 0 1.5em; font-size: 1.1em; color: #225; }
-    .debug-controls { margin: 1em auto; max-width: 400px; padding: 1em; background: #eef; border-radius: 0.5em; text-align: center; }
-    .debug-controls label { margin-right: 0.5em; }
-    .debug-controls input, .debug-controls select { margin: 0 0.5em; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Musical Scale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #2d3748; /* Darker card background */
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #cbd5e0;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #a0aec0;
+            margin-bottom: 2rem;
+        }
+
+        .scale-card {
+            background-color: #4a5568;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .scale-card-prev {
+            background-color: #2d3748;
+            opacity: 0.8;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        .scale-name {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #63b3ed;
+        }
+
+        .scale-name-prev {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #a0aec0;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+    </style>
 </head>
 <body>
-  <h1>Musical Scale of the Day</h1>
-  <div class="debug-controls">
-    <label for="debug-month">Month:</label>
-    <select id="debug-month"></select>
-    <label for="debug-day">Day:</label>
-    <select id="debug-day"></select>
-    <button id="debug-update">Update</button>
-  </div>
-  <div class="scale-box" id="scales"></div>
+
+<div class="container">
+    <h1 class="title">Musical Scale of the Day</h1>
+    <p class="subtitle">A new scale every day, for every user.</p>
+
+    <!-- Today's Scale -->
+    <div id="today-container" class="scale-card">
+        <p class="text-lg text-white font-semibold mb-2">Today's Scale:</p>
+        <div id="today-scale" class="scale-name">Loading...</div>
+    </div>
+
+    <!-- Yesterday's Scale -->
+    <div id="yesterday-container" class="scale-card scale-card-prev">
+        <p class="text-lg text-gray-300 font-semibold mb-2">Yesterday's Scale:</p>
+        <div id="yesterday-scale" class="scale-name-prev">Loading...</div>
+    </div>
+
+</div>
+
 <script>
-const ROOTS = ["A", "Ab", "B", "Bb", "C", "C#", "D", "Db", "E", "Eb", "F", "F#", "G", "Gb"];
-const TYPES = ["Natural", "Melodic Minor", "Harmonic Minor"];
-const ALL_SCALES = [];
-ROOTS.forEach(root => TYPES.forEach(type => ALL_SCALES.push(`${root} ${type}`));
-const CHROMATIC = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-const ROOT_INDEX = {
-  "C": 0,  "C#": 1, "Db": 1,
-  "D": 2,
-  "Eb": 3, "D#": 3,
-  "E": 4,
-  "F": 5,
-  "F#": 6, "Gb": 6,
-  "G": 7,
-  "Ab": 8, "G#": 8,
-  "A": 9,
-  "Bb": 10, "A#": 10,
-  "B": 11
-};
-const SCALE_FORMULAS = {
-  "Natural":        [2, 1, 2, 2, 1, 2, 2],
-  "Melodic Minor":  [2, 1, 2, 2, 2, 2, 1],
-  "Harmonic Minor": [2, 1, 2, 2, 1, 3, 1]
-};
-function getScaleNotes(root, type) {
-  let formula = SCALE_FORMULAS[type];
-  let idx = ROOT_INDEX[root];
-  let notes = [CHROMATIC[idx]];
-  for (let i = 0; i < formula.length; i++) {
-    idx = (idx + formula[i]) % 12;
-    notes.push(CHROMATIC[idx]);
-  }
-  return notes.slice(0, 7);
-}
-function mulberry32(seed) {
-  return function() {
-    let t = seed += 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function hashDate(str) {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-function scaleForDay(dayOffset, startDate, calendarCache) {
-  let date = new Date(startDate);
-  date.setDate(date.getDate() + dayOffset);
-  let dateStr = date.toISOString().slice(0,10);
-  if (calendarCache[dateStr]) return calendarCache[dateStr];
-  let recent = [];
-  for (let i = 1; i <= 7; i++) {
-    let prevDate = new Date(date);
-    prevDate.setDate(prevDate.getDate() - i);
-    let prevStr = prevDate.toISOString().slice(0,10);
-    if (calendarCache[prevStr]) recent.push(calendarCache[prevStr]);
-  }
-  let seed = hashDate(dateStr + "-fixed-seed");
-  let rng = mulberry32(seed);
-  let eligible = ALL_SCALES.filter(s => !recent.includes(s));
-  let pick = eligible[Math.floor(rng() * eligible.length)];
-  calendarCache[dateStr] = pick;
-  return pick;
-}
-// ----- Debug controls -----
-function populateMonthDayFields() {
-  // Months
-  const monthSelect = document.getElementById("debug-month");
-  monthSelect.innerHTML = "";
-  for (let m = 0; m < 12; m++) {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = new Date(2025, m, 1).toLocaleString('default', { month: 'long' });
-    monthSelect.appendChild(opt);
-  }
-  // Set current month
-  const now = new Date();
-  monthSelect.value = now.getMonth();
-  // Days
-  updateDaysDropdown(now.getFullYear(), now.getMonth(), now.getDate());
-  // Update days when month changes
-  monthSelect.addEventListener("change", function() {
-    updateDaysDropdown(now.getFullYear(), parseInt(monthSelect.value, 10), 1);
-  });
-}
-function updateDaysDropdown(year, month, selectedDay) {
-  const daySelect = document.getElementById("debug-day");
-  daySelect.innerHTML = "";
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  for (let d = 1; d <= daysInMonth; d++) {
-    const opt = document.createElement("option");
-    opt.value = d;
-    opt.textContent = d;
-    daySelect.appendChild(opt);
-  }
-  // Select current day if valid, else first day
-  daySelect.value = selectedDay <= daysInMonth ? selectedDay : 1;
-}
-function getDebugDate() {
-  const month = parseInt(document.getElementById("debug-month").value, 10);
-  const day = parseInt(document.getElementById("debug-day").value, 10);
-  const year = (new Date()).getFullYear();
-  return new Date(Date.UTC(year, month, day));
-}
-function renderScale(scaleStr, labelClass, labelText) {
-  let [root, ...typeArr] = scaleStr.split(" ");
-  let type = typeArr.join(" ");
-  let notes = getScaleNotes(root, type);
-  return `<div>
-    <span class="label">${labelText}</span>
-    <div class="${labelClass}">${scaleStr}</div>
-    <div class="notes-list">${notes.join(", ")}</div>
-  </div>`;
-}
-function updateScalesDisplay() {
-  let calendarCache = {};
-  let debugDate = getDebugDate();
-  let todayScale = scaleForDay(0, debugDate, calendarCache);
-  let yesterdayScale = scaleForDay(-1, debugDate, calendarCache);
-  let html = renderScale(todayScale, "scale-today", "Today");
-  if (yesterdayScale) {
-    html += renderScale(yesterdayScale, "scale-yesterday", "Yesterday");
-  }
-  document.getElementById("scales").innerHTML = html;
-}
-populateMonthDayFields();
-updateScalesDisplay();
-document.getElementById("debug-update").onclick = updateScalesDisplay;
-document.getElementById("debug-month").onchange = function() {
-  const year = (new Date()).getFullYear();
-  const month = parseInt(document.getElementById("debug-month").value, 10);
-  updateDaysDropdown(year, month, 1);
-  updateScalesDisplay();
-};
-document.getElementById("debug-day").onchange = updateScalesDisplay;
+    // Musical scale logic
+    const roots = ["A", "Ab", "B", "Bb", "C", "C#", "D", "Db", "E", "Eb", "F", "F#", "G", "Gb"];
+    const types = ["Natural", "Melodic Minor", "Harmonic Minor"];
+
+    // Function to generate a seeded pseudo-random number
+    // This ensures the sequence of scales is the same for every user on the same day.
+    function seededRandom(seed) {
+        let x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+    }
+
+    // Function to shuffle an array using the seeded PRNG
+    function seededShuffle(array, seed) {
+        let currentIndex = array.length, randomIndex;
+
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(seededRandom(seed + currentIndex) * currentIndex);
+            currentIndex--;
+
+            [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // Function to get the current day's number (day since epoch)
+    function getDayNumber() {
+        const today = new Date();
+        const start = new Date(0); // Unix epoch
+        const diff = today.getTime() - start.getTime();
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+
+    // Main function to get the scales for the day
+    function getDailyScales() {
+        // Create the full list of all possible scales (15 roots * 3 types = 45 scales)
+        const allScales = [];
+        roots.forEach(root => {
+            types.forEach(type => {
+                allScales.push(`${root} ${type}`);
+            });
+        });
+
+        // Use the current day number as the seed for consistency
+        const dayNumber = getDayNumber();
+        
+        // Shuffle the scales to create a unique, repeatable sequence for the next 30 days
+        const scalesSequence = seededShuffle(allScales.slice(), dayNumber);
+
+        // Calculate today's scale index
+        const todayIndex = dayNumber % allScales.length;
+        
+        // Today's scale is the one at the calculated index
+        const todayScale = scalesSequence[todayIndex];
+
+        // Yesterday's scale is the one from the previous day's sequence
+        const yesterdayIndex = (dayNumber - 1) % allScales.length;
+        const yesterdayScale = scalesSequence[yesterdayIndex];
+
+        // Ensure yesterday's scale is only shown if the app has been running for at least 1 day
+        const yesterdayContainer = document.getElementById('yesterday-container');
+        if (dayNumber > 0) {
+            document.getElementById('yesterday-scale').textContent = yesterdayScale;
+        } else {
+            yesterdayContainer.style.display = 'none';
+        }
+
+        // Display today's scale
+        document.getElementById('today-scale').textContent = todayScale;
+    }
+
+    // Run the function to display the scales when the page loads
+    window.onload = getDailyScales;
 </script>
+
 </body>
 </html>
