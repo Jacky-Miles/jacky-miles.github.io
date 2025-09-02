@@ -108,7 +108,7 @@
 
     <!-- Past Scales Section -->
     <div id="past-scales-section">
-        <div class="section-heading">Scales in the Past 7 Days</div>
+        <div class="section-heading">Scales practiced in the Past 3 Days</div>
         <div id="past-scales-container">
             <!-- Past scales will be dynamically added here -->
         </div>
@@ -167,9 +167,9 @@
         const todayScale = scalesSequence[todayIndex];
         document.getElementById('today-scale').textContent = todayScale;
         
-        // Display past 7 days' scales
+        // Display past 3 days' scales
         const pastScalesContainer = document.getElementById('past-scales-container');
-        for (let i = 1; i <= 7; i++) {
+        for (let i = 1; i <= 3; i++) {
             const pastDayNumber = dayNumber - i;
             if (pastDayNumber >= 0) {
                 const pastScaleIndex = pastDayNumber % allScales.length;
@@ -177,7 +177,7 @@
                 
                 const dayDiv = document.createElement('div');
                 dayDiv.className = 'scale-card scale-card-prev';
-                dayDiv.innerHTML = `<p class="text-gray-400 font-medium">Day ${i} ago:</p><div class="scale-name-prev">${pastScale}</div>`;
+                dayDiv.innerHTML = `<p class="text-gray-400 font-medium">${i} days ago:</p><div class="scale-name-prev">${pastScale}</div>`;
                 pastScalesContainer.appendChild(dayDiv);
             }
         }
