@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Musical Scale</title>
+    <title>Daily Musical Scale Practice</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -15,7 +15,7 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            overflow: hidden;
+            overflow-y: auto; /* Allow scrolling for multiple scales */
         }
 
         .container {
@@ -61,6 +61,8 @@
         .scale-card-prev {
             background-color: #2d3748;
             opacity: 0.8;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
             animation: slideIn 0.8s ease-out;
         }
 
@@ -81,12 +83,21 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
+        .section-heading {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #cbd5e0;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 class="title">Musical Scale of the Day</h1>
+    <h1 class="title">Musical Scale Practice of the Day</h1>
     <p class="subtitle">A new scale every day, for every user.</p>
 
     <!-- Today's Scale -->
@@ -95,12 +106,13 @@
         <div id="today-scale" class="scale-name">Loading...</div>
     </div>
 
-    <!-- Yesterday's Scale -->
-    <div id="yesterday-container" class="scale-card scale-card-prev">
-        <p class="text-lg text-gray-300 font-semibold mb-2">Yesterday's Scale:</p>
-        <div id="yesterday-scale" class="scale-name-prev">Loading...</div>
+    <!-- Past Scales Section -->
+    <div id="past-scales-section">
+        <div class="section-heading">Scales in the Past 7 Days</div>
+        <div id="past-scales-container">
+            <!-- Past scales will be dynamically added here -->
+        </div>
     </div>
-
 </div>
 
 <script>
@@ -137,7 +149,7 @@
         return Math.floor(diff / (1000 * 60 * 60 * 24));
     }
 
-    // Main function to get the scales for the day
+    // Main function to get the scales for the day and the past 7 days
     function getDailyScales() {
         // Create the full list of all possible scales (15 roots * 3 types = 45 scales)
         const allScales = [];
@@ -147,32 +159,28 @@
             });
         });
 
-        // Use the current day number as the seed for consistency
         const dayNumber = getDayNumber();
-        
-        // Shuffle the scales to create a unique, repeatable sequence for the next 30 days
         const scalesSequence = seededShuffle(allScales.slice(), dayNumber);
-
-        // Calculate today's scale index
-        const todayIndex = dayNumber % allScales.length;
         
-        // Today's scale is the one at the calculated index
-        const todayScale = scalesSequence[todayIndex];
-
-        // Yesterday's scale is the one from the previous day's sequence
-        const yesterdayIndex = (dayNumber - 1) % allScales.length;
-        const yesterdayScale = scalesSequence[yesterdayIndex];
-
-        // Ensure yesterday's scale is only shown if the app has been running for at least 1 day
-        const yesterdayContainer = document.getElementById('yesterday-container');
-        if (dayNumber > 0) {
-            document.getElementById('yesterday-scale').textContent = yesterdayScale;
-        } else {
-            yesterdayContainer.style.display = 'none';
-        }
-
         // Display today's scale
+        const todayIndex = dayNumber % allScales.length;
+        const todayScale = scalesSequence[todayIndex];
         document.getElementById('today-scale').textContent = todayScale;
+        
+        // Display past 7 days' scales
+        const pastScalesContainer = document.getElementById('past-scales-container');
+        for (let i = 1; i <= 7; i++) {
+            const pastDayNumber = dayNumber - i;
+            if (pastDayNumber >= 0) {
+                const pastScaleIndex = pastDayNumber % allScales.length;
+                const pastScale = scalesSequence[pastScaleIndex];
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'scale-card scale-card-prev';
+                dayDiv.innerHTML = `<p class="text-gray-400 font-medium">Day ${i} ago:</p><div class="scale-name-prev">${pastScale}</div>`;
+                pastScalesContainer.appendChild(dayDiv);
+            }
+        }
     }
 
     // Run the function to display the scales when the page loads
